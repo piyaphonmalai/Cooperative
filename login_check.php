@@ -1,26 +1,54 @@
 <?php
-    include 'server.php';
-    session_start();
-    
-    $username = $_POST['username'];
-    $password = $_POST['password'];
+session_start();
+include 'connect.php';
 
-    // เข้ารหัส password ด้วย sha512 
-    $password = hash('sha512', $password);
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $username = mysqli_real_escape_string($conn, $_POST['username']);
+    $password = mysqli_real_escape_string($conn, $_POST['password']);
 
-    $sql = "SELECT * FROM user WHERE username_user = '$username' AND password_user = '$password'";
+    $sql = "SELECT * FROM users WHERE username = '$username'";
     $result = mysqli_query($conn, $sql);
-    $row = mysqli_fetch_array($result);
 
-    if($row){
-        $_SESSION["username"] = $row['username_user'];
-        $_SESSION["pw"] = $row['password_user'];
-        $_SESSION["email"] = $row['email_user'];
-        header("location:index.php");
-        exit();
+    if (mysqli_num_rows($result) == 1) {
+        $row = mysqli_fetch_assoc($result);
+        $status = $row['status'];
+
+        if ($status == '0') {
+            // เปลี่ยนไปยังหน้าผู้ใช้ทั่วไป
+            $_SESSION["role"] = 'user';
+        } elseif ($status == '1') {
+            // เปลี่ยนไปยังหน้าผู้ดูแลระบบ
+            $_SESSION["role"] = 'admin';
+        } else {
+            // บทบาทไม่ถูกต้องหรือไม่ได้กำหนด
+            $_SESSION["Error"] = "บทบาทผู้ใช้ไม่ถูกต้อง";
+            header("location:login.php");
+            exit();
+        }
+
+        if (password_verify($password, $row['password'])) {
+            $_SESSION["username"] = $row['username'];
+            $_SESSION["email"] = $row['email'];
+
+            // Redirect ไปยังหน้าที่ถูกต้องตามบทบาท
+            if ($_SESSION["role"] === 'user') {
+                header("location:user.php");
+            } elseif ($_SESSION["role"] === 'admin') {
+                header("location:admin.php");
+            }
+
+            exit();
+        } else {
+            $_SESSION["Error"] = "รหัสผ่านไม่ถูกต้อง";
+            header("location:login.php");
+            exit();
+        }
     } else {
-        $_SESSION["Error"] = "<p>Your username or password is invalid</p>";
-        header("location:index.php");
+        $_SESSION["Error"] = "ไม่พบชื่อผู้ใช้";
+        header("location:login.php");
         exit();
     }
+}
+
+mysqli_close($conn);
 ?>
