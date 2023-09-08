@@ -1,6 +1,7 @@
 <?php
 session_start();
-include 'connect.php';
+if(!isset($_SESSION["username"]))
+    header("Location:login.php");
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = mysqli_real_escape_string($conn, $_POST['username']);
@@ -45,7 +46,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 mysqli_close($conn);
 ?>
 
-
+<!-- break 
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -73,9 +74,10 @@ mysqli_close($conn);
 <body>
     <div class="container">
         <div class="alert alert-success welcome-message" role="alert">
-            ยินดีต้อนรับผู้ใช้
+            ยินดีต้อนรับ User
         </div>
         <a href="logout.php" class="btn btn-danger btn-block logout-link">ออกจากระบบ</a>
     </div>
 </body>
 </html>
+    -->
